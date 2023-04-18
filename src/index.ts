@@ -92,15 +92,50 @@ async function pingProgram(connection: Web3.Connection, payer: Web3.Keypair) {
   );
 }
 
+async function transferSolToAccount(
+  connection: Web3.Connection,
+  payer: Web3.Keypair,
+  recipient: Web3.Keypair,
+  amount: number
+) {
+  //Create a new transaction
+  const transaction = new Web3.Transaction();
+
+  //Create an instruction
+  const transferSolInstruction = Web3.SystemProgram.transfer({
+    fromPubkey: payer.publicKey,
+    toPubkey: recipient.publicKey,
+    lamports: amount * Web3.LAMPORTS_PER_SOL,
+  });
+
+  //Add instruction to transaction
+  transaction.add(transferSolInstruction);
+
+  //Confirm transaction
+  const signature = await Web3.sendAndConfirmTransaction(
+    connection,
+    transaction,
+    [payer]
+  );
+
+  //Track confirmation of transaction
+  console.log(
+    `You can view your transaction on the Solana Explorer at:\nhttps://explorer.solana.com/tx/${signature}?cluster=devnet`
+  );
+}
+
 dotenv.config();
 
 async function main() {
   const connection = new Web3.Connection(Web3.clusterApiUrl("devnet"));
   const signer = await initializeKeypair(connection);
 
+  const newRecipient = await initializeKeypair(connection);
+
   console.log("Public key: ", signer.publicKey.toBase58());
 
   await pingProgram(connection, signer);
+  await transferSolToAccount(connection, signer, newRecipient, 1);
 }
 
 main()
