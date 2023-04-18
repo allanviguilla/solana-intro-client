@@ -98,23 +98,26 @@ async function transferSolToAccount(
   recipient: Web3.Keypair,
   amount: number
 ) {
+  const balance = await connection.getBalance(payer.publicKey);
+  console.log("Current balance is", balance / Web3.LAMPORTS_PER_SOL, "SOL");
+
   //Create a new transaction
-  const transaction = new Web3.Transaction();
+  const newTransaction = new Web3.Transaction();
 
   //Create an instruction
-  const transferSolInstruction = Web3.SystemProgram.transfer({
+  const newInstruction = Web3.SystemProgram.transfer({
     fromPubkey: payer.publicKey,
     toPubkey: recipient.publicKey,
     lamports: amount * Web3.LAMPORTS_PER_SOL,
   });
 
   //Add instruction to transaction
-  transaction.add(transferSolInstruction);
+  newTransaction.add(newInstruction);
 
   //Confirm transaction
   const signature = await Web3.sendAndConfirmTransaction(
     connection,
-    transaction,
+    newTransaction,
     [payer]
   );
 
@@ -128,14 +131,15 @@ dotenv.config();
 
 async function main() {
   const connection = new Web3.Connection(Web3.clusterApiUrl("devnet"));
-  const signer = await initializeKeypair(connection);
 
-  const newRecipient = await initializeKeypair(connection);
+  const newPayer = await initializeKeypair(connection);
+  const newRecipient = Web3.Keypair.generate();
 
-  console.log("Public key: ", signer.publicKey.toBase58());
+  //await transferSolToAccount(connection, newPayer, newRecipient, 1);
 
-  await pingProgram(connection, signer);
-  await transferSolToAccount(connection, signer, newRecipient, 1);
+  //const signer = await initializeKeypair(connection);
+  //console.log("Public key: ", signer.publicKey.toBase58());
+  //await pingProgram(connection, signer);
 }
 
 main()
